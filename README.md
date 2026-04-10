@@ -1,34 +1,48 @@
-Animal Classification with Custom CNN Pipeline
-Dự án này triển khai một luồng huấn luyện và suy luận hoàn chỉnh (End-to-End) cho bài toán phân loại 10 loài động vật sử dụng mạng tích chập (CNN) tùy chỉnh trên nền tảng PyTorch.
+# Animal Classification with Custom CNN Pipeline
 
-📌 Các đặc điểm nổi bật
-Kiến trúc SimpleCNN tùy chỉnh: Thiết kế mạng gồm 5 khối tích chập (make_block), mỗi khối tích hợp BatchNorm và LeakyReLU để tăng tốc độ hội tụ và ổn định quá trình huấn luyện.
-Luồng dữ liệu (Data Pipeline) mạnh mẽ:
-  Tích hợp kỹ thuật tăng cường dữ liệu (RandomAffine, ColorJitter) để cải thiện khả năng tổng quát hóa của mô hình.
-  Chuẩn hóa dữ liệu theo thông số của ImageNet để tối ưu hiệu suất.
-Quản lý huấn luyện chuyên nghiệp:
-  Tích hợp CLI (Command Line Interface) qua argparse cho phép cấu hình linh hoạt (epochs, batch size, learning rate...) mà không cần sửa code.
-  Sử dụng TensorBoard để theo dõi trực quan hàm mất mát (Loss) và độ chính xác (Accuracy) theo thời gian thực.
-  Cơ chế Checkpointing: Tự động lưu lại mô hình tốt nhất (best_cnn.pt) và mô hình cuối cùng (last_cnn.pt).
-Đánh giá chi tiết: Xuất Confusion Matrix trực tiếp lên TensorBoard để phân tích sai sót giữa các lớp nhân vật.
+Dự án này triển khai một hệ thống phân loại động vật (10 lớp) dựa trên kiến trúc mạng tích chập (CNN) tùy chỉnh. Hệ thống được thiết kế theo dạng module chuyên nghiệp, hỗ trợ huấn luyện linh hoạt và suy luận trực quan[cite: 2, 4, 6].
 
-🛠 Công nghệ sử dụng
-  Framework chính: PyTorch, Torchvision.
-  Xử lý hình ảnh: OpenCV, PIL (Pillow).
-  Phân tích & Theo dõi: Scikit-learn, TensorBoard, Matplotlib, tqdm.
-  
-📂 Cấu trúc thư mục
-  models.py: Chứa định nghĩa kiến trúc mạng SimpleCNN.
-  dataset.py: Lớp AnimalDataset tùy chỉnh để quản lý dữ liệu từ thư mục ./data/animals/.
-  train.py: Script huấn luyện hệ thống tích hợp CLI và logging.
-  inference.py: Script suy luận để dự đoán hình ảnh đơn lẻ và hiển thị kết quả trực quan bằng OpenCV.
-  
-🚀 Hướng dẫn sử dụng
-  Huấn luyện (Training)
-    python train.py --root ./data --epochs 100 --batch-size 8 --image-size 224
-  Suy luận (Inference)
-    python inference.py --image-path path/to/your/image.jpg --checkpoint trained_models/best_cnn.pt
-    
-📝 Lưu ý
-  Dữ liệu: Để chạy dự án, hãy đặt dữ liệu vào thư mục ./data/animals/ với cấu trúc gồm hai thư mục con train và test. Danh sách 10 lớp bao gồm: butterfly, cat, chicken, cow, dog, elephant, horse, sheep, spider, squirrel.
-  Cấu hình: Mặc định mô hình sẽ ưu tiên sử dụng CUDA nếu máy tính của bạn có hỗ trợ GPU.
+## Mục lục
+
+1. [Tổng quan Flow Code](#tổng-quan-flow-code)
+2. [Yêu cầu cài đặt](#yêu-cầu-cài-đặt)
+3. [Cấu hình dự án](#cấu-hình-dự-án)
+4. [Cách chạy](#cách-chạy)
+    - [Huấn luyện mô hình](#huấn-luyện-mô-hình)
+    - [Chạy suy luận (Inference)](#chạy-suy-luận-inference)
+5. [Đặc điểm kỹ thuật nổi bật](#đặc-điểm-kỹ-thuật-nổi-bật)
+6. [Lưu ý quan trọng](#lưu-ý-quan-trọng)
+
+---
+
+## Tổng quan Flow Code
+
+Hệ thống được chia thành nhiều module chuyên biệt, giúp quản lý luồng dữ liệu và mô hình hiệu quả:
+
+1. **`dataset.py`**: 
+    - Chịu trách nhiệm quản lý và tải dữ liệu từ thư mục `./data/animals/`.
+    - Định nghĩa lớp `AnimalDataset` kế thừa từ `torch.utils.data.Dataset`[cite: 5].
+    - Xử lý nhãn cho 10 danh mục: *butterfly, cat, chicken, cow, dog, elephant, horse, sheep, spider, squirrel*[cite: 5].
+
+2. **`models.py`**:
+    - Định nghĩa kiến trúc `SimpleCNN` với 5 khối tích chập tùy chỉnh[cite: 6].
+    - Mỗi khối sử dụng cơ chế `BatchNorm` và `LeakyReLU` để tối ưu hóa quá trình học của mạng sâu[cite: 6].
+    - Tích hợp lớp `Dropout` tại các tầng kết nối đầy đủ (Fully Connected) để chống quá khớp (overfitting)[cite: 6].
+
+3. **`train.py`**:
+    - Luồng điều khiển chính cho quá trình huấn luyện.
+    - Sử dụng `argparse` để nhận các tham số cấu hình từ dòng lệnh (CLI) như epochs, batch size, learning rate.
+    - Tích hợp `SummaryWriter` để ghi lại nhật ký huấn luyện lên **TensorBoard**.
+    - Thực hiện đánh giá mô hình qua **Confusion Matrix** sau mỗi epoch.
+
+4. **`inference.py`**:
+    - Module dự đoán kết quả cho hình ảnh đơn lẻ[cite: 3].
+    - Tải trọng số tốt nhất (`best_cnn.pt`), xử lý ảnh đầu vào bằng OpenCV và hiển thị kết quả trực quan kèm độ tin cậy[cite: 3].
+
+---
+
+## Yêu cầu cài đặt
+
+Để chạy dự án, bạn cần cài đặt các thư viện sau:
+```bash
+pip install torch torchvision opencv-python scikit-learn matplotlib tqdm tensorboard
